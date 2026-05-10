@@ -21,10 +21,11 @@ class Particle {
 
     reset() {
         this.x = Math.random() * window.innerWidth;
-        this.y = window.innerHeight + 50; // เริ่มจากใต้จอ
+        this.y = window.innerHeight + 50; 
         this.vx = 0;
         this.vy = 0;
-        this.size = Math.random() * 2 + 0.5;
+        // ปรับขนาดทรายให้ใหญ่ขึ้นเล็กน้อย (1.5 - 3.5 px) เพื่อให้เห็นชัดในมือถือ
+        this.size = Math.random() * 2 + 1.5; 
         this.color = `rgb(${210 + Math.random()*45}, ${165 + Math.random()*40}, ${110 + Math.random()*40})`;
         this.delay = Math.random();
         this.isDropped = false;
@@ -58,10 +59,10 @@ class Particle {
                 if (this.y >= groundHeight[gx]) {
                     this.y = groundHeight[gx];
                     this.isSettled = true;
-                    // ทำกองทรายพูนขึ้น
                     for(let i = -2; i <= 2; i++) {
                         if (gx + i >= 0 && gx + i < groundHeight.length) {
-                            groundHeight[gx + i] -= (0.5 / (Math.abs(i) + 1));
+                            // ปรับให้กองทรายพูนขึ้นสูงขึ้นตามจำนวนทรายที่เยอะขึ้น
+                            groundHeight[gx + i] -= (0.3 / (Math.abs(i) + 1));
                         }
                     }
                 }
@@ -88,7 +89,6 @@ function init() {
     fallIndex = 0;
 
     const isPortrait = window.innerHeight > window.innerWidth;
-    // ปรับขนาดฟอนต์ให้เข้ากับแนวตั้ง
     const fontSize = isPortrait ? window.innerWidth * 0.13 : Math.min(window.innerWidth * 0.09, 85);
     
     ctx.font = `bold ${fontSize}px Tahoma`;
@@ -96,7 +96,6 @@ function init() {
     ctx.textBaseline = "middle";
 
     if (isPortrait) {
-        // แยกบรรทัดสำหรับมือถือแนวตั้ง
         ctx.fillText("ง้อน้าแอดมิน", window.innerWidth / 2, window.innerHeight * 0.35);
         ctx.fillText("มูมู่", window.innerWidth / 2, window.innerHeight * 0.35 + fontSize * 1.2);
     } else {
@@ -106,7 +105,9 @@ function init() {
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-    const step = isPortrait ? 3 : 2; // มือถือสแกนห่างขึ้นเพื่อให้ลื่น
+    // แก้ตรงนี้: ลดค่า step ลงเพื่อให้ทรายหนาแน่นขึ้น (1.5 - 2 คือค่าที่สวยที่สุด)
+    const step = isPortrait ? 1.8 : 1.5; 
+    
     for (let y = 0; y < canvas.height; y += step * dpr) {
         for (let x = 0; x < canvas.width; x += step * dpr) {
             const index = (Math.floor(y) * canvas.width + Math.floor(x)) * 4;
@@ -130,7 +131,8 @@ function animate() {
     }
 
     if (isStartingToFall && fallIndex < particles.length) {
-        const dropsPerFrame = window.innerWidth < 600 ? 6 : 3;
+        // แก้ตรงนี้: เพิ่มความเร็วในการร่วง (ปล่อยร่วงเยอะขึ้นต่อเฟรม เพราะทรายเราเยอะขึ้นมาก)
+        const dropsPerFrame = window.innerWidth < 600 ? 15 : 8; 
         for(let i = 0; i < dropsPerFrame; i++) {
             if(fallIndex < particles.length) {
                 particles[fallIndex].isDropped = true;
@@ -142,7 +144,6 @@ function animate() {
     if (isStartingToFall && fallIndex >= particles.length) {
         if (particles.every(p => p.isSettled)) {
             btn.classList.remove('hidden');
-            btn.innerText = "กดสิมูมู่ (อีกรอบ)";
             isAssembling = false;
             isStartingToFall = false;
         }
@@ -178,7 +179,6 @@ function startEffect() {
     }
 }
 
-// ป้องกันการรูดหน้าจอแล้วเด้งไปมาบนมือถือ
 document.addEventListener('touchmove', (e) => {
     if (isAssembling || isStartingToFall) e.preventDefault();
 }, { passive: false });
